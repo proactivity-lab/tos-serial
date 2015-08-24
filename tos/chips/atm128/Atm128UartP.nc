@@ -43,37 +43,38 @@
 
 #include <Timer.h>
 
-generic module Atm128UartP() @safe() {
-  
+generic module Atm128UartP(uint32_t baudrate) @safe() {
+
   provides interface Init;
   provides interface StdControl;
   provides interface UartByte;
   provides interface UartStream;
-  
+
   uses interface StdControl as HplUartTxControl;
   uses interface StdControl as HplUartRxControl;
   uses interface HplAtm128Uart as HplUart;
   uses interface Counter<TMicro, uint32_t>;
-  
+
 }
 
 implementation{
-  
+
   norace uint16_t m_tx_len, m_rx_len;
   norace uint8_t *COUNT_NOK(m_tx_len) m_tx_buf, * COUNT_NOK(m_rx_len) m_rx_buf;
   norace uint16_t m_tx_pos, m_rx_pos;
   norace uint16_t m_byte_time;
   norace uint8_t m_rx_intr;
   norace uint8_t m_tx_intr;
-  
+
   command error_t Init.init() {
-    if (PLATFORM_BAUDRATE == 19200UL)
-      m_byte_time = 200; // 1 TMicor ~= 2.12 us, one byte = 417us ~= 200
-    else if (PLATFORM_BAUDRATE == 57600UL)
-      m_byte_time = 68;  // 1 TMicor ~= 2.12 us, one byte = 138us ~= 65
+//    if (baudrate == 19200UL)
+//      m_byte_time = 200; // 1 TMicro ~= 2.12 us, one byte = 417us ~= 200
+//    else if (baudrate == 57600UL)
+//      m_byte_time = 68;  // 1 TMicro ~= 2.12 us, one byte = 138us ~= 65
+    m_byte_time = 3840000UL / baudrate; // (19200 * 200) / baudrate
     return SUCCESS;
   }
-  
+
   command error_t StdControl.start(){
     /* make sure interupts are off and set flags */
     call HplUart.disableTxIntr();
@@ -113,7 +114,7 @@ implementation{
   }
 
   async command error_t UartStream.receive( uint8_t* buf, uint16_t len ){
-    
+
     if ( len == 0 )
       return FAIL;
     atomic {
@@ -125,9 +126,9 @@ implementation{
       m_rx_intr |= 1;
       call HplUart.enableRxIntr();
     }
-    
+
     return SUCCESS;
-    
+
   }
 
   async event void HplUart.rxDone( uint8_t data ) {
@@ -149,29 +150,29 @@ implementation{
     else {
       signal UartStream.receivedByte( data );
     }
-    
+
   }
 
   async command error_t UartStream.send( uint8_t *buf, uint16_t len){
-    
+
     if ( len == 0 )
       return FAIL;
     else if ( m_tx_buf )
       return EBUSY;
-    
+
     m_tx_len = len;
     m_tx_buf = buf;
     m_tx_pos = 0;
     m_tx_intr = 1;
     call HplUart.enableTxIntr();
     call HplUart.tx( buf[ m_tx_pos++ ] );
-    
+
     return SUCCESS;
-    
+
   }
 
   async event void HplUart.txDone() {
-    
+
     if ( m_tx_pos < m_tx_len ) {
       call HplUart.tx( m_tx_buf[ m_tx_pos++ ] );
     }
@@ -182,7 +183,7 @@ implementation{
       call HplUart.disableTxIntr();
       signal UartStream.sendDone( buf, m_tx_len, SUCCESS );
     }
-    
+
   }
 
   async command error_t UartByte.send( uint8_t byte ){
@@ -193,12 +194,12 @@ implementation{
     while ( !call HplUart.isTxEmpty() );
     return SUCCESS;
   }
-  
+
   async command error_t UartByte.receive( uint8_t * byte, uint8_t timeout){
 
     uint16_t timeout_micro = m_byte_time * timeout + 1;
     uint16_t start;
-    
+
     if(m_rx_intr)
       return FAIL;
 
@@ -208,11 +209,11 @@ implementation{
 	return FAIL;
     }
     *byte = call HplUart.rx();
-    
+
     return SUCCESS;
-    
+
   }
-  
+
   async event void Counter.overflow() {}
 
   default async event void UartStream.sendDone( uint8_t* buf, uint16_t len, error_t error ){}
