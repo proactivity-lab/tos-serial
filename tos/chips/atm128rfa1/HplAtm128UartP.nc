@@ -99,7 +99,7 @@
  *
  */
 
-/** 
+/**
  * Private component of the Atmega1281 serial port HPL.
  *
  * @author Martin Turon <mturon@xbow.com>
@@ -110,24 +110,34 @@
 #include <Atm128Uart.h>
 
 module HplAtm128UartP {
-  
+
   provides interface Init as Uart0Init;
   provides interface StdControl as Uart0TxControl;
   provides interface StdControl as Uart0RxControl;
   provides interface HplAtm128Uart as HplUart0;
-    
+
   provides interface Init as Uart1Init;
   provides interface StdControl as Uart1TxControl;
   provides interface StdControl as Uart1RxControl;
   provides interface HplAtm128Uart as HplUart1;
 
 	provides interface McuPowerOverride;
-  
+
   uses interface Atm128Calibrate;
   uses interface McuPowerState;
 }
 implementation {
-  
+
+  #ifndef UART0_BAUDRATE
+    #define UART0_BAUDRATE PLATFORM_BAUDRATE
+    #warning "Using PLATFORM_BAUDRATE for UART0_BAUDRATE"
+  #endif // UART0_BAUDRATE
+
+  #ifndef UART1_BAUDRATE
+    #define UART1_BAUDRATE PLATFORM_BAUDRATE
+    #warning "Using PLATFORM_BAUDRATE for UART1_BAUDRATE"
+  #endif // UART1_BAUDRATE
+
   //=== Uart Init Commands. ====================================
   command error_t Uart0Init.init() {
     Atm128UartMode_t    mode;
@@ -139,7 +149,7 @@ implementation {
     stts.bits = (struct Atm128_UCSRA_t) {u2x:1};
     mode.bits = (struct Atm128_UCSRC_t) {ucsz:ATM128_UART_DATA_SIZE_8_BITS};
 
-    ubrr0 = call Atm128Calibrate.baudrateRegister(PLATFORM_BAUDRATE);
+    ubrr0 = call Atm128Calibrate.baudrateRegister(UART0_BAUDRATE);
     UBRR0L = ubrr0;
     UBRR0H = ubrr0 >> 8;
     UCSR0A = stts.flat;
@@ -172,18 +182,18 @@ implementation {
     call McuPowerState.update();
     return SUCCESS;
   }
-  
+
   async command error_t HplUart0.enableTxIntr() {
     SET_BIT(UCSR0A, TXC0);
     SET_BIT(UCSR0B, TXCIE0);
     return SUCCESS;
   }
-  
+
   async command error_t HplUart0.disableTxIntr(){
     CLR_BIT(UCSR0B, TXCIE0);
     return SUCCESS;
   }
-  
+
   async command error_t HplUart0.enableRxIntr(){
     SET_BIT(UCSR0B, RXCIE0);
     return SUCCESS;
@@ -193,7 +203,7 @@ implementation {
     CLR_BIT(UCSR0B, RXCIE0);
     return SUCCESS;
   }
-  
+
   async command bool HplUart0.isTxEmpty(){
     return READ_BIT(UCSR0A, TXC0);
   }
@@ -201,39 +211,39 @@ implementation {
   async command bool HplUart0.isRxEmpty(){
     return !READ_BIT(UCSR0A, RXC0);
   }
-  
+
   async command uint8_t HplUart0.rx(){
     return UDR0;
   }
 
   async command void HplUart0.tx(uint8_t data) {
     atomic{
-      UDR0 = data; 
+      UDR0 = data;
       SET_BIT(UCSR0A, TXC0);
     }
   }
-  
+
   AVR_ATOMIC_HANDLER(USART0_RX_vect) {
     if (READ_BIT(UCSR0A, RXC0)) {
       signal HplUart0.rxDone(UDR0);
     }
   }
-  
+
   AVR_NONATOMIC_HANDLER(USART0_TX_vect) {
     signal HplUart0.txDone();
   }
-  
+
   command error_t Uart1Init.init() {
     Atm128UartMode_t    mode;
     Atm128UartStatus_t  stts;
     Atm128UartControl_t ctrl;
     uint16_t ubrr1;
-    
+
     ctrl.bits = (struct Atm128_UCSRB_t) {rxcie:0, txcie:0, rxen:0, txen:0};
     stts.bits = (struct Atm128_UCSRA_t) {u2x:1};
     mode.bits = (struct Atm128_UCSRC_t) {ucsz:ATM128_UART_DATA_SIZE_8_BITS};
 
-    ubrr1 = call Atm128Calibrate.baudrateRegister(PLATFORM_BAUDRATE);
+    ubrr1 = call Atm128Calibrate.baudrateRegister(UART1_BAUDRATE);
     UBRR1L = ubrr1;
     UBRR1H = ubrr1 >> 8;
     UCSR1A = stts.flat;
@@ -267,20 +277,20 @@ implementation {
     call McuPowerState.update();
     return SUCCESS;
   }
-  
+
   async command error_t HplUart1.enableTxIntr() {
     SET_BIT(UCSR1A, TXC1);
     SET_BIT(UCSR1B, TXCIE1);
     return SUCCESS;
   }
 
-	
-  
+
+
   async command error_t HplUart1.disableTxIntr(){
     CLR_BIT(UCSR1B, TXCIE1);
     return SUCCESS;
   }
-  
+
   async command error_t HplUart1.enableRxIntr(){
     SET_BIT(UCSR1B, RXCIE1);
     return SUCCESS;
@@ -290,7 +300,7 @@ implementation {
     CLR_BIT(UCSR1B, RXCIE1);
     return SUCCESS;
   }
-  
+
   async command bool HplUart1.isTxEmpty() {
     return READ_BIT(UCSR1A, TXC1);
   }
@@ -298,37 +308,37 @@ implementation {
   async command bool HplUart1.isRxEmpty() {
     return !READ_BIT(UCSR1A, RXC1);
   }
-  
+
   async command uint8_t HplUart1.rx(){
     return UDR1;
   }
 
   async command void HplUart1.tx(uint8_t data) {
     atomic{
-      UDR1 = data; 
+      UDR1 = data;
       SET_BIT(UCSR1A, TXC1);
     }
   }
-  
+
   AVR_ATOMIC_HANDLER(USART1_RX_vect) {
     if (READ_BIT(UCSR1A, RXC1))
       signal HplUart1.rxDone(UDR1);
   }
-  
+
   AVR_NONATOMIC_HANDLER(USART1_TX_vect) {
     signal HplUart1.txDone();
   }
- 
+
   async command mcu_power_t McuPowerOverride.lowestState() {
     if ( (UCSR0B & (1<<TXEN0)) || (UCSR0B & (1<<RXEN0)) || (UCSR1B & (1<<TXEN1)) || (UCSR1B & (1<<RXEN1)) )
       return ATM128_POWER_IDLE;
     else
       return ATM128_POWER_DOWN;
   }
- 
-  default async event void HplUart0.txDone() {} 
+
+  default async event void HplUart0.txDone() {}
   default async event void HplUart0.rxDone(uint8_t data) {}
   default async event void HplUart1.txDone() {}
   default async event void HplUart1.rxDone(uint8_t data) {}
-  
+
 }
