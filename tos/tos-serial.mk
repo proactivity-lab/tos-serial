@@ -12,3 +12,11 @@ endif
 ifdef UART1_BAUDRATE
     PFLAGS += -DUART1_BAUDRATE=$(UART1_BAUDRATE)
 endif
+
+ifdef PLATFORM_SERIAL_UART0
+    PFLAGS += -I$(THIS_TOSSERIAL_DIR)/chips/atm128/uart0
+endif
+
+ifdef PLATFORM_SERIAL_UART1
+    PFLAGS += -I$(THIS_TOSSERIAL_DIR)/chips/atm128/uart1
+endif

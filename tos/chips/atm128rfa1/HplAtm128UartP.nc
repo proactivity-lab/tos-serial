@@ -108,7 +108,7 @@
  */
 
 #include <Atm128Uart.h>
-
+#include <Atm128UartBaudrate.h>
 module HplAtm128UartP {
 
   provides interface Init as Uart0Init;
@@ -127,16 +127,6 @@ module HplAtm128UartP {
   uses interface McuPowerState;
 }
 implementation {
-
-  #ifndef UART0_BAUDRATE
-    #define UART0_BAUDRATE PLATFORM_BAUDRATE
-    #warning "Using PLATFORM_BAUDRATE for UART0_BAUDRATE"
-  #endif // UART0_BAUDRATE
-
-  #ifndef UART1_BAUDRATE
-    #define UART1_BAUDRATE PLATFORM_BAUDRATE
-    #warning "Using PLATFORM_BAUDRATE for UART1_BAUDRATE"
-  #endif // UART1_BAUDRATE
 
   //=== Uart Init Commands. ====================================
   command error_t Uart0Init.init() {

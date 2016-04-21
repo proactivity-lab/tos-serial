@@ -33,7 +33,7 @@
  * @author Alec Woo <awoo@archrock.com>
  * @author Jonathan Hui <jhui@archrock.com>
  */
-
+#include "Atm128UartBaudrate.h"
 configuration Atm128Uart1C {
 
   provides interface StdControl;
