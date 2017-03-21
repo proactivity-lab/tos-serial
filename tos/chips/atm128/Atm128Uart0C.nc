@@ -36,6 +36,7 @@
 #include "Atm128UartBaudrate.h"
 configuration Atm128Uart0C {
 
+  provides interface Set<uint32_t> as UartBaudRate;
   provides interface StdControl;
   provides interface UartByte;
   provides interface UartStream;
@@ -45,13 +46,20 @@ configuration Atm128Uart0C {
 
 implementation{
 
+  #ifndef UART0_BAUDRATE
+    #define UART0_BAUDRATE PLATFORM_BAUDRATE
+    #warning "Using PLATFORM_BAUDRATE for UART0_BAUDRATE"
+  #endif // UART0_BAUDRATE
+
   components new Atm128UartP(UART0_BAUDRATE) as UartP;
+  UartBaudRate = UartP;
   StdControl = UartP;
   UartByte = UartP;
   UartStream = UartP;
   UartP.Counter = Counter;
 
   components HplAtm128UartC as HplUartC;
+  UartP.HplUartBaudRate -> HplUartC.Uart0BaudRate;
   UartP.HplUartTxControl -> HplUartC.Uart0TxControl;
   UartP.HplUartRxControl -> HplUartC.Uart0RxControl;
   UartP.HplUart -> HplUartC.HplUart0;

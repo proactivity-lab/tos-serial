@@ -43,13 +43,15 @@
 
 #include <Timer.h>
 
-generic module Atm128UartP(uint32_t baudrate) @safe() {
+generic module Atm128UartP(uint32_t default_baudrate) @safe() {
 
+  provides interface Set<uint32_t> as UartBaudRate;
   provides interface Init;
   provides interface StdControl;
   provides interface UartByte;
   provides interface UartStream;
 
+  uses interface Set<uint32_t> as HplUartBaudRate;
   uses interface StdControl as HplUartTxControl;
   uses interface StdControl as HplUartRxControl;
   uses interface HplAtm128Uart as HplUart;
@@ -65,17 +67,22 @@ implementation{
   norace uint16_t m_byte_time;
   norace uint8_t m_rx_intr;
   norace uint8_t m_tx_intr;
+  norace uint32_t m_baudrate = default_baudrate;
 
   command error_t Init.init() {
-//    if (baudrate == 19200UL)
-//      m_byte_time = 200; // 1 TMicro ~= 2.12 us, one byte = 417us ~= 200
-//    else if (baudrate == 57600UL)
-//      m_byte_time = 68;  // 1 TMicro ~= 2.12 us, one byte = 138us ~= 65
-    m_byte_time = 3840000UL / baudrate; // (19200 * 200) / baudrate
+    m_byte_time = 1000000UL / m_baudrate;
     return SUCCESS;
   }
 
-  command error_t StdControl.start(){
+  command void UartBaudRate.set(uint32_t baudrate) {
+    m_baudrate = baudrate;
+    m_byte_time = 1000000UL / baudrate; // (19200 * 200) / baudrate
+  }
+
+  command error_t StdControl.start() {
+    /* Set baudrate, initialize registers */
+    call HplUartBaudRate.set(m_baudrate);
+
     /* make sure interupts are off and set flags */
     call HplUart.disableTxIntr();
     call HplUart.disableRxIntr();

@@ -100,23 +100,24 @@
  */
 
 /**
- * Private component of the Atmega1281 serial port HPL.
+ * Private component of the Atmega64/128/256RFA1/RFR2 serial port HPL.
  *
  * @author Martin Turon <mturon@xbow.com>
  * @author David Gay
  * @author Janos Sallai <janos.sallai@vanderbilt.edu>
+ * @author Raido Pahtma
  */
 
 #include <Atm128Uart.h>
 #include <Atm128UartBaudrate.h>
 module HplAtm128UartP {
 
-  provides interface Init as Uart0Init;
+  provides interface Set<uint32_t> as Uart0BaudRate;
   provides interface StdControl as Uart0TxControl;
   provides interface StdControl as Uart0RxControl;
   provides interface HplAtm128Uart as HplUart0;
 
-  provides interface Init as Uart1Init;
+  provides interface Set<uint32_t> as Uart1BaudRate;
   provides interface StdControl as Uart1TxControl;
   provides interface StdControl as Uart1RxControl;
   provides interface HplAtm128Uart as HplUart1;
@@ -128,8 +129,7 @@ module HplAtm128UartP {
 }
 implementation {
 
-  //=== Uart Init Commands. ====================================
-  command error_t Uart0Init.init() {
+  command void Uart0BaudRate.set(uint32_t baudrate) {
     Atm128UartMode_t    mode;
     Atm128UartStatus_t  stts;
     Atm128UartControl_t ctrl;
@@ -139,14 +139,12 @@ implementation {
     stts.bits = (struct Atm128_UCSRA_t) {u2x:1};
     mode.bits = (struct Atm128_UCSRC_t) {ucsz:ATM128_UART_DATA_SIZE_8_BITS};
 
-    ubrr0 = call Atm128Calibrate.baudrateRegister(UART0_BAUDRATE);
+    ubrr0 = call Atm128Calibrate.baudrateRegister(baudrate);
     UBRR0L = ubrr0;
     UBRR0H = ubrr0 >> 8;
     UCSR0A = stts.flat;
     UCSR0C = mode.flat;
     UCSR0B = ctrl.flat;
-
-    return SUCCESS;
   }
 
   command error_t Uart0TxControl.start() {
@@ -223,7 +221,7 @@ implementation {
     signal HplUart0.txDone();
   }
 
-  command error_t Uart1Init.init() {
+  command void Uart1BaudRate.set(uint32_t baudrate) {
     Atm128UartMode_t    mode;
     Atm128UartStatus_t  stts;
     Atm128UartControl_t ctrl;
@@ -233,14 +231,12 @@ implementation {
     stts.bits = (struct Atm128_UCSRA_t) {u2x:1};
     mode.bits = (struct Atm128_UCSRC_t) {ucsz:ATM128_UART_DATA_SIZE_8_BITS};
 
-    ubrr1 = call Atm128Calibrate.baudrateRegister(UART1_BAUDRATE);
+    ubrr1 = call Atm128Calibrate.baudrateRegister(baudrate);
     UBRR1L = ubrr1;
     UBRR1H = ubrr1 >> 8;
     UCSR1A = stts.flat;
     UCSR1C = mode.flat;
     UCSR1B = ctrl.flat;
-
-    return SUCCESS;
   }
 
   command error_t Uart1TxControl.start() {
