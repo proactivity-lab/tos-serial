@@ -45,8 +45,7 @@
 
 generic module Atm128UartP(uint32_t default_baudrate) @safe() {
 
-  provides interface Get<uint32_t> as GetUartBaudRate;
-  provides interface Set<uint32_t> as SetUartBaudRate;
+  provides interface GetSet<uint32_t> as UartBaudRate;
   provides interface Init;
   provides interface StdControl;
   provides interface UartByte;
@@ -75,11 +74,11 @@ implementation{
     return SUCCESS;
   }
 
-  command uint32_t GetUartBaudRate.get() {
+  command uint32_t UartBaudRate.get() {
     return m_baudrate;
   }
 
-  command void SetUartBaudRate.set(uint32_t baudrate) {
+  command void UartBaudRate.set(uint32_t baudrate) {
     m_baudrate = baudrate;
     m_byte_time = 1000000UL / baudrate; // (19200 * 200) / baudrate
   }

@@ -36,8 +36,7 @@
 #include "Atm128UartBaudrate.h"
 configuration Atm128Uart0C {
 
-  provides interface Set<uint32_t> as SetUartBaudRate;
-  provides interface Get<uint32_t> as GetUartBaudRate;
+  provides interface GetSet<uint32_t> as UartBaudRate;
   provides interface StdControl;
   provides interface UartByte;
   provides interface UartStream;
@@ -53,8 +52,7 @@ implementation{
   #endif // UART0_BAUDRATE
 
   components new Atm128UartP(UART0_BAUDRATE) as UartP;
-  SetUartBaudRate = UartP;
-  GetUartBaudRate = UartP;
+  UartBaudRate = UartP;
   StdControl = UartP;
   UartByte = UartP;
   UartStream = UartP;
