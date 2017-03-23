@@ -67,7 +67,10 @@ implementation{
   norace uint16_t m_byte_time;
   norace uint8_t m_rx_intr;
   norace uint8_t m_tx_intr;
-  norace uint32_t m_baudrate = default_baudrate;
+
+  uint32_t m_baudrate = default_baudrate;
+
+  bool m_started = FALSE;
 
   command error_t Init.init() {
     m_byte_time = 1000000UL / m_baudrate;
@@ -80,7 +83,10 @@ implementation{
 
   command void UartBaudRate.set(uint32_t baudrate) {
     m_baudrate = baudrate;
-    m_byte_time = 1000000UL / baudrate; // (19200 * 200) / baudrate
+    m_byte_time = 1000000UL / baudrate; // microseconds
+    if(m_started) {
+      call StdControl.start(); // Reconfigure immediately
+    }
   }
 
   command error_t StdControl.start() {
@@ -99,12 +105,16 @@ implementation{
 
     // Bug fix: pal 11/26/07: RX interrupts should be enabled on start
     call HplUart.enableRxIntr();
+
+    m_started = TRUE;
     return SUCCESS;
   }
 
   command error_t StdControl.stop(){
     call HplUartTxControl.stop();
     call HplUartRxControl.stop();
+
+    m_started = FALSE;
     return SUCCESS;
   }
 
@@ -130,7 +140,7 @@ implementation{
       return FAIL;
     atomic {
       if ( m_rx_buf )
-	return EBUSY;
+        return EBUSY;
       m_rx_buf = buf;
       m_rx_len = len;
       m_rx_pos = 0;
@@ -147,15 +157,15 @@ implementation{
     if ( m_rx_buf ) {
       m_rx_buf[ m_rx_pos++ ] = data;
       if ( m_rx_pos >= m_rx_len ) {
-	uint8_t* buf = m_rx_buf;
-	atomic{
-	  m_rx_buf = NULL;
-	  if(m_rx_intr != 3){
-	    call HplUart.disableRxIntr();
-	    m_rx_intr = 0;
-	  }
-	}
-	signal UartStream.receiveDone( buf, m_rx_len, SUCCESS );
+        uint8_t* buf = m_rx_buf;
+        atomic{
+          m_rx_buf = NULL;
+          if(m_rx_intr != 3){
+            call HplUart.disableRxIntr();
+            m_rx_intr = 0;
+          }
+        }
+        signal UartStream.receiveDone( buf, m_rx_len, SUCCESS );
       }
     }
     else {
@@ -217,7 +227,7 @@ implementation{
     start = call Counter.get();
     while ( call HplUart.isRxEmpty() ) {
       if ( ( (uint16_t)call Counter.get() - start ) >= timeout_micro )
-	return FAIL;
+        return FAIL;
     }
     *byte = call HplUart.rx();
 
