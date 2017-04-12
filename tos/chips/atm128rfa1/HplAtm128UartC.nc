@@ -70,9 +70,14 @@ implementation
   HplAtm128UartP.Atm128Calibrate -> PlatformC;
   HplAtm128UartP.McuPowerState -> McuSleepC;
 
+  components MainC;
+  MainC.SoftwareInit -> HplAtm128UartP.Uart0Init;
+  MainC.SoftwareInit -> HplAtm128UartP.Uart1Init;
+
+  HplAtm128UartP.McuPowerState -> McuSleepC;
+  HplAtm128UartP.McuPowerOverride <- McuSleepC;
+
   Uart0BaudRate = HplAtm128UartP.Uart0BaudRate;
   Uart1BaudRate = HplAtm128UartP.Uart1BaudRate;
 
-	HplAtm128UartP.McuPowerState -> McuSleepC;
-	HplAtm128UartP.McuPowerOverride <- McuSleepC;
 }

@@ -112,11 +112,13 @@
 #include <Atm128UartBaudrate.h>
 module HplAtm128UartP {
 
+  provides interface Init as Uart0Init;
   provides interface Set<uint32_t> as Uart0BaudRate;
   provides interface StdControl as Uart0TxControl;
   provides interface StdControl as Uart0RxControl;
   provides interface HplAtm128Uart as HplUart0;
 
+  provides interface Init as Uart1Init;
   provides interface Set<uint32_t> as Uart1BaudRate;
   provides interface StdControl as Uart1TxControl;
   provides interface StdControl as Uart1RxControl;
@@ -128,6 +130,11 @@ module HplAtm128UartP {
   uses interface McuPowerState;
 }
 implementation {
+
+  command error_t Uart0Init.init() {
+    call Uart0BaudRate.set(UART0_BAUDRATE);
+    return SUCCESS;
+  }
 
   command void Uart0BaudRate.set(uint32_t baudrate) {
     Atm128UartMode_t    mode;
@@ -219,6 +226,11 @@ implementation {
 
   AVR_NONATOMIC_HANDLER(USART0_TX_vect) {
     signal HplUart0.txDone();
+  }
+
+  command error_t Uart1Init.init() {
+    call Uart1BaudRate.set(UART1_BAUDRATE);
+    return SUCCESS;
   }
 
   command void Uart1BaudRate.set(uint32_t baudrate) {
