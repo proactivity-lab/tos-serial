@@ -320,7 +320,7 @@ implementation {
   }
 
   task void startDoneTask() {
-    call SerialControl.start();
+    // call SerialControl.start();
     atomic {
       txState = TXSTATE_IDLE;
       rxState = RXSTATE_NOSYNC;
@@ -334,7 +334,7 @@ implementation {
   }
 
   event void SerialFlush.flushDone(){
-    call SerialControl.stop();
+    // call SerialControl.stop();
     signal SplitControl.stopDone(SUCCESS);
   }
 

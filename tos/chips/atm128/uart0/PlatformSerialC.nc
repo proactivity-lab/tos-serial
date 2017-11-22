@@ -46,12 +46,12 @@ implementation {
 
   #warning *** PLATFORM DEFAULT SERIAL PORT IS UART0 ***
 
-  components Atm128Uart0C as Uart;
-  StdControl = Uart;
-  UartStream = Uart;
-  UartByte = Uart;
+  // components Atm128Uart0C as Uart;
+  // StdControl = Uart;
+  // UartStream = Uart;
+  // UartByte = Uart;
 
-  components CounterMicro32C;
-  Uart.Counter -> CounterMicro32C;
+  // components CounterMicro32C;
+  // Uart.Counter -> CounterMicro32C;
 
 }
