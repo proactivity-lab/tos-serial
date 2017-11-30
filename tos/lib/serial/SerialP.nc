@@ -642,7 +642,7 @@ implementation {
     }
     
     if (send_completed){
-      signal SendBytePacket.sendCompleted(result);
+      // signal SendBytePacket.sendCompleted(result);
     }
     atomic {
       if (txState == TXSTATE_INACTIVE) {
@@ -658,10 +658,10 @@ implementation {
         txByteCnt = 0;
         txState = TXSTATE_PROTO; 
       }
-      if (call SerialFrameComm.putDelimiter() != SUCCESS) {
-        atomic txState = TXSTATE_ERROR; 
-        MaybeScheduleTx();
-      }
+      // if (call SerialFrameComm.putDelimiter() != SUCCESS) {
+      //   atomic txState = TXSTATE_ERROR; 
+      //   MaybeScheduleTx();
+      // }
     }
     
   }
